@@ -14,15 +14,26 @@ export const signup = async (email: string, password: string) => {
 
 // 로그인 서비스
 export const login = async (email: string, password: string) => {
-  const response = await api.post("/users/login", { email, password });
-  const { token } = response.data;
+  try {
+    console.log("Login attempt:", { email });
+    const response = await api.post("/users/login", { email, password });
+    console.log("Login response:", response.data);
 
-  // 토큰을 로컬 스토리지에 저장
-  if (token && typeof window !== "undefined") {
-    localStorage.setItem("token", token);
+    const { token } = response.data;
+
+    // 토큰을 로컬 스토리지에 저장
+    if (token && typeof window !== "undefined") {
+      localStorage.setItem("token", token);
+      console.log("Token saved to localStorage:", token);
+    } else {
+      console.error("No token received or not in browser environment");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
   }
-
-  return response.data;
 };
 
 // 로그아웃 서비스
@@ -40,13 +51,28 @@ export const logout = async () => {
 // 현재 로그인된 사용자 확인
 export const isAuthenticated = () => {
   if (typeof window !== "undefined") {
-    return !!localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    console.log("isAuthenticated check:", { hasToken: !!token, token: token?.substring(0, 20) + "..." });
+    return !!token;
   }
+  console.log("isAuthenticated check: not in browser environment");
   return false;
 };
 
-// 관리자 권한 확인 (임시 구현, 실제로는 백엔드 API 통해 확인해야 함)
+// 관리자 권한 확인
 export const isAdmin = () => {
-  // TODO: 실제 관리자 확인 로직 구현
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (!token) return false;
+
+    try {
+      // JWT 토큰 디코딩 (간단한 방법)
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.role === "ROLE_ADMIN";
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return false;
+    }
+  }
   return false;
 };

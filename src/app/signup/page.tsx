@@ -43,7 +43,7 @@ export default function Signup() {
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-2 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gray-800 hover:opacity-80">
-            가전제품 설명서 Q&A
+            가전제품 Q&A 챗봇
           </Link>
           <div className="flex items-center space-x-4">
             <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
@@ -57,7 +57,7 @@ export default function Signup() {
         <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900">회원가입</h2>
-            <p className="mt-2 text-gray-600">새 계정을 만들어 가전제품 설명서 Q&A 서비스를 이용하세요</p>
+            <p className="mt-2 text-gray-600">새 계정을 만들어 가전제품 Q&A 챗봇 서비스를 이용하세요</p>
           </div>
 
           {errorMessage && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{errorMessage}</div>}

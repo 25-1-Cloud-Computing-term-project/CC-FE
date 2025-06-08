@@ -1,5 +1,11 @@
 import api from "./api";
-import { Category } from "./brandService";
+
+// 카테고리 타입 정의
+export interface Category {
+  id: number;
+  name: string;
+  brandId: number;
+}
 
 // 카테고리 목록 조회
 export const getCategories = async (): Promise<Category[]> => {
@@ -13,7 +19,7 @@ export const getCategoryById = async (id: number): Promise<Category> => {
   return response.data;
 };
 
-// 특정 브랜드의 카테고리 목록
+// 브랜드별 카테고리 목록 조회
 export const getCategoriesByBrandId = async (brandId: number): Promise<Category[]> => {
   const response = await api.get(`/categories/brand/${brandId}`);
   return response.data;

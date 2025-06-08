@@ -33,7 +33,7 @@ export default function Logout() {
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-2 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gray-800 hover:opacity-80">
-            가전제품 설명서 Q&A
+            가전제품 Q&A 챗봇
           </Link>
         </div>
       </div>
