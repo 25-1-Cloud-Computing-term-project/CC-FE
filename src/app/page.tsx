@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { getBrands, Brand, Category } from "@/services/brandService";
 import { getCategoriesByBrandId } from "@/services/categoryService";
-import { getPublicModels, getPublicModelsByCategoryId, getPersonalModels, Model, createPersonalModel } from "@/services/modelService";
+import { getPublicModels, getPublicModelsByCategoryId, getPersonalModels, Model, createPersonalModel, downloadManual } from "@/services/modelService";
 import { isAuthenticated, isAdmin } from "@/services/authService";
 import { sendQuestion } from "@/services/chatService";
 
@@ -50,6 +50,9 @@ export default function Home() {
   const [chatLoading, setChatLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // 다운로드 관련 상태 추가
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // 인증 확인
   const checkAuth = () => {
@@ -413,6 +416,38 @@ export default function Home() {
     }
   };
 
+  // 매뉴얼 다운로드 처리
+  const handleManualDownload = async () => {
+    if (!selectedModel || !selectedModel.manual) {
+      setUploadError("다운로드할 매뉴얼이 없습니다.");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      setUploadError(null);
+
+      const blob = await downloadManual(selectedModel.id);
+
+      // 다운로드 링크 생성 및 클릭
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = selectedModel.manual.fileName || `${selectedModel.name}_매뉴얼.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // 정리
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      console.error("Failed to download manual:", error);
+      setUploadError("매뉴얼 다운로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* 사용자 인증 상태 표시 및 로그인/로그아웃 버튼 */}
@@ -556,13 +591,35 @@ export default function Home() {
             <>
               {/* 채팅 헤더 */}
               <div className="bg-white border-b border-gray-200 p-4">
-                <div className="flex items-center">
+                <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">{selectedModel.name}</h2>
                     <p className="text-sm text-gray-500">
                       {selectedModel.brand?.name} | {selectedModel.category?.name}
                     </p>
                   </div>
+
+                  {/* 다운로드 버튼 */}
+                  {selectedModel.manual && (
+                    <button onClick={handleManualDownload} disabled={isDownloading} className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors ${isDownloading ? "opacity-50 cursor-not-allowed" : ""}`} title="매뉴얼 PDF 다운로드">
+                      {isDownloading ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          다운로드 중...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          매뉴얼 다운로드
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 

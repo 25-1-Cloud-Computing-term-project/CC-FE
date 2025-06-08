@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getPersonalModels, Model, deletePersonalModel, downloadManual } from "@/services/modelService";
+import { getPersonalModels, Model, deletePersonalModel, downloadManual, updatePersonalModel } from "@/services/modelService";
 import { isAuthenticated } from "@/services/authService";
 
 export default function PersonalModels() {
@@ -13,6 +13,12 @@ export default function PersonalModels() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
+
+  // 수정 관련 상태 추가
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const router = useRouter();
 
   // 인증 확인 및 모델 로드
@@ -80,6 +86,45 @@ export default function PersonalModels() {
     }
   };
 
+  // 모델 수정 시작 처리
+  const handleEditStart = (model: Model) => {
+    setEditingId(model.id);
+    setEditingName(model.name);
+    setError(null);
+  };
+
+  // 모델 수정 취소 처리
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  // 모델 수정 저장 처리
+  const handleEditSave = async (id: number) => {
+    if (!editingName.trim()) {
+      setError("모델명을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const updatedModel = await updatePersonalModel(id, editingName.trim());
+
+      // 모델 목록에서 해당 모델 업데이트
+      setModels(models.map((model) => (model.id === id ? updatedModel : model)));
+
+      // 편집 모드 종료
+      setEditingId(null);
+      setEditingName("");
+      setError(null);
+    } catch (error) {
+      console.error("Failed to update model:", error);
+      setError("모델 수정 중 오류가 발생했습니다.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* 사용자 인증 상태 표시 및 로그인/로그아웃 버튼 */}
@@ -140,7 +185,24 @@ export default function PersonalModels() {
                 {models.map((model) => (
                   <tr key={model.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{model.name}</div>
+                      {editingId === model.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleEditSave(model.id);
+                            } else if (e.key === "Escape") {
+                              handleEditCancel();
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="text-sm font-medium text-gray-900">{model.name}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {model.manual && (
@@ -150,9 +212,25 @@ export default function PersonalModels() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                      <button onClick={() => handleDelete(model.id)} disabled={isDeleting && deleteId === model.id} className={`px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 ${isDeleting && deleteId === model.id ? "opacity-50 cursor-not-allowed" : ""}`}>
-                        {isDeleting && deleteId === model.id ? "삭제 중..." : "삭제"}
-                      </button>
+                      {editingId === model.id ? (
+                        <>
+                          <button onClick={() => handleEditSave(model.id)} disabled={isUpdating} className={`px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 ${isUpdating ? "opacity-50 cursor-not-allowed" : ""}`}>
+                            {isUpdating ? "저장 중..." : "저장"}
+                          </button>
+                          <button onClick={handleEditCancel} disabled={isUpdating} className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600">
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => handleEditStart(model)} className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                            수정
+                          </button>
+                          <button onClick={() => handleDelete(model.id)} disabled={isDeleting && deleteId === model.id} className={`px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 ${isDeleting && deleteId === model.id ? "opacity-50 cursor-not-allowed" : ""}`}>
+                            {isDeleting && deleteId === model.id ? "삭제 중..." : "삭제"}
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
