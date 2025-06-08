@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async rewrites() {
+    const apiBaseUrl = process.env.API_BASE_URL;
+    console.log("API Base URL:", apiBaseUrl);
     return [
       {
         source: "/api/:path*",
-        destination: "http://172.21.20.140:8080/api/:path*",
+        destination: `${apiBaseUrl}/api/:path*`,
       },
     ];
   },

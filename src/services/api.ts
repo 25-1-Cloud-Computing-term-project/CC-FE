@@ -1,7 +1,7 @@
 import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
 
 // API 기본 URL 설정
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const API_BASE_URL = process.env.API_BASE_URL || "/api";
 
 console.log("API_BASE_URL:", API_BASE_URL);
 
